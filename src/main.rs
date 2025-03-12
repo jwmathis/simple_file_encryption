@@ -1,26 +1,55 @@
-use std::env; // For accessing command line arguments
+use clap::Parser; // For parsing command line arguments
 use std::process; // For exiting the program
-use std::fs::File; // For creating and writing to files
-use::std::path::Path; // For creating file paths
+use std::fs; // For creating and writing to files
+use std::env; // For getting the current working directory
 
+// Define a struct to hold the command line arguments
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    // Path to the input file
+    #[arg(short, long)]
+    input: String,
+
+    // Path to the output file
+    #[arg(short, long)]
+    output: String
+}
+
+
+// Read file
+fn read_file(path: &str) -> Vec<u8> {
+    fs::read(path).unwrap_or_else(|err| {
+        eprintln!("Failed to read file: {}", err);
+        process::exit(1);
+    })
+}
+
+fn write_file(path: &str, data: Vec<u8>) {
+    fs::write(path, data).unwrap_or_else(|err| {
+        eprintln!("Failed to write file: {}", err);
+        process::exit(1);
+    })
+}
 fn main() {
     // Collect command line arguments
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
 
-    // Check if the number of arguments is correct
-    if args.len() != 3 {
-        // Print error message
-        eprintln!("Usage: {} <input file> <output file>", args[0]);
-        // Exit with error code 1
-        process::exit(1);
-    }
+    // Debug: Print the command line arguments
+    println!("Command line arguments: {:#?}", args);
 
-    // Get the input and output file names
-    let input_file = &args[1];
-    let output_file = &args[2];
+    // Debug: Print the current working directory
+    println!("Current working directory: {}", env::current_dir().unwrap().display());
 
-    // Debug: Print the input and output file names
-    println!("Input file: {}", input_file);
-    println!("Output file: {}", output_file);
+    // Read the input file
+    let input_data = read_file(&args.input);
 
+    // Debug: Print the input data
+    println!("Input data: {:#?}", input_data);
+
+    // Write the output file
+    write_file(&args.output, input_data);
+    
+    // Exit the program
+    process::exit(0);
 }
