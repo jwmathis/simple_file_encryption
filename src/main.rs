@@ -25,7 +25,14 @@ fn read_file(path: &str) -> Vec<u8> {
     })
 }
 
-fn write_file(path: &str, data: Vec<u8>) {
+// Encrypt file with XOR
+fn encrypt_decrypt(data: &[u8], xor_key: u8) -> Vec<u8> {
+
+    data.iter().map(|&byte| byte ^ xor_key).collect()
+}
+
+// Write file
+fn write_file(path: &str, data: &[u8]) {
     fs::write(path, data).unwrap_or_else(|err| {
         eprintln!("Failed to write file: {}", err);
         process::exit(1);
@@ -47,9 +54,20 @@ fn main() {
     // Debug: Print the input data
     println!("Input data: {:#?}", input_data);
 
-    // Write the output file
-    write_file(&args.output, input_data);
+
+    // Encrypt the input data
+    let key = 0x42;
+
+    let encrypted_data = encrypt_decrypt(&input_data, key);
+    println!("Encrypted data: {:#?}", encrypted_data);
     
+    
+    // Write the output file
+    write_file(&args.output, &encrypted_data);
+    
+    // Debug: Decrypt the input data
+    println!("Decrypted data: {:#?}", encrypt_decrypt(&encrypted_data, key));
+
     // Exit the program
     process::exit(0);
 }
