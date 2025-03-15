@@ -1,19 +1,18 @@
 use std::process; // For exiting the program
 use std::fs; // For creating and writing to files
 //use std::env; // For getting the current working directory
-
+use colored::*;
 
 // Read file
 fn read_file(path: &str) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|err| {
-        eprintln!("Failed to read file: {}", err);
+        eprintln!("Failed to read file: {}.red()", err);
         process::exit(1);
     })
 }
 
 // Encrypt file with XOR
 fn encrypt_decrypt(data: &[u8], xor_key: u8) -> Vec<u8> {
-
     data.iter().map(|&byte| byte ^ xor_key).collect()
 }
 
@@ -26,29 +25,37 @@ fn write_file(path: &str, data: &[u8]) {
 }
 
 // Print CLI Application usage
-fn print_usage() {
-    println!("Usage: encryptor [OPTIONS] <input> <output>
-        -h, --help    Print this help message (--help for complete summary)
-    ");
+fn print_help_summary() {
+    println!("{} encryptor [OPTIONS] <input> <output>", "Usage:".green().bold());
+
+    println!(
+        "\n{}:
+        -c, --cipher  Set the cipher type [default: encrypt]
+        -i, --input   Set the input file
+        -o, --output  Set the output file
+        -h, --help    Print this help message (--help for complete help)" 
+        , "Options".bold());
 }
 
 // Print CLI Application help
 fn print_help() {
-    println!("Program to encrypt or decrypt a file using a simple XOR cipher. 
+    println!("
+    {}
+    Program to encrypt or decrypt a file using a simple XOR cipher. 
     The default cipher type is encryption, but can be set to decryption. 
     \n\nFor encryption set the cipher type to \"encrypt\" or \"e\". 
     For decryption set the cipher type to \"decrypt\" or \"d\"
-    ");
+    ", "CLI Xor Cipher".blue().bold());
 
-    print_usage();
+    println!("{} encryptor [OPTIONS] <input> <output>", "Usage:".green().bold());
 
     println!(
-    "\nOptions:
+    "\n{}:
     -c, --cipher  Set the cipher type [default: encrypt]
     -i, --input   Set the input file
     -o, --output  Set the output file
     -h, --help    Print this help message (-h for summary)" 
-    );
+    , "Options".bold());
 
 }
 
@@ -94,8 +101,12 @@ fn main() {
                         process::exit(1);
                     }
                 }
-                "--help" | "-h" => {
+                "--help" => {
                     print_help();
+                    process::exit(0);
+                }
+                "-h" => {
+                    print_help_summary();
                     process::exit(0);
                 }
                 _ => {
