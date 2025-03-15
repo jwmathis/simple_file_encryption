@@ -45,7 +45,9 @@ fn write_file(path: &str, data: &[u8]) {
 }
 
 fn print_usage() {
-    println!("Usage: encryptor [OPTIONS] <input> <output>");
+    println!("Usage: encryptor [OPTIONS] <input> <output>
+        -h, --help    Print this help message (--help for complete summary)
+    ");
 }
 
 fn print_help() {
@@ -58,11 +60,11 @@ fn print_help() {
     print_usage();
 
     println!(
-    "Options:
+    "\nOptions:
     -c, --cipher  Set the cipher type [default: encrypt]
     -i, --input   Set the input file
     -o, --output  Set the output file
-    -h, --help    Print this help message"
+    -h, --help    Print this help message (-h for summary)" 
     );
 
 }
@@ -71,29 +73,64 @@ fn main() {
     // Collect command line arguments
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() < 2 || args.contains(&String::from("--help")) {
-        print_help();
-        process::exit(0);
-    } else if args.len() != 3 {
-        print_usage();
-        process::exit(1);
-    }
-
-    let mut input = None
-    let mut output = None
-    let mut cipher_type = None
+    let mut input = None;
+    let mut output = None;
+    let mut cipher = None;
 
     let mut i = 1;
+
     while i < args.len() {
         match args[i].as_str() {
-            "-i" | "--input" => {b
-        }
+                "--cipher" | "-c" => {
+                    i += 1;
+                    if i < args.len() {
+                        cipher = Some(args[i].clone());
+                    } else {
+                        eprintln!("Error: Missing cipher type. --cipher requires an argument.");
+                        process::exit(1);
+                    }
+                }
+                "--input" | "-i" => {
+                    i += 1;
+                    if i < args.len() {
+                        input = Some(args[i].clone());
+                    } else {
+                        eprintln!("Error: Missing input file. --input requires an argument.");
+                        process::exit(1);
+                    }
+                }
+               "--output" | "-o" => {
+                    i += 1;
+                    if i < args.len() {
+                        output = Some(args[i].clone());
+                    } else {
+                        eprintln!("Error: Missing output file. --output requires an argument.");
+                        process::exit(1);
+                    }
+                }
+                "--help" | "-h" => {
+                    print_help();
+                    process::exit(0);
+                }
+                _ => {
+                    eprintln!("Error: Unrecognized option: {}", args[i]);
+                    process::exit(1);
+                }
+            }
+            i += 1;             
     }
-    // Debug: Print the current working directory
-    //println!("Current working directory: {}", env::current_dir().unwrap().display());
+    
+    let cipher_type: String;
+    if cipher.is_none() { 
+        cipher_type = "encrypt".to_string(); // Default to encryption if no cipher type is set
+    } else {
+        cipher_type = cipher.expect("Error: Missing cipher type. --cipher requires an argument.");
+    }
+    let input_file = input.expect("Error: Missing input file. --input requires an argument.");
+    let output_file = output.expect("Error: Missing output file. --output requires an argument.");
     
     // Read the input file
-    let input_data = read_file(input);
+    let input_data = read_file(&input_file);
 
     // Debug: Print the input data
     //println!("Input data: {:#?}", input_data);
@@ -107,7 +144,7 @@ fn main() {
     
     
     // Write the output file
-    write_file(output, &encrypted_data);
+    write_file(&output_file, &encrypted_data);
     
     if cipher_type == "decrypt" || cipher_type == "d" {
         println!("Successfully decrypted and written to file: {}", args[2]);
