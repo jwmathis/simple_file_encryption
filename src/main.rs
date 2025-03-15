@@ -1,25 +1,6 @@
-use clap::Parser; // For parsing command line arguments
 use std::process; // For exiting the program
 use std::fs; // For creating and writing to files
 //use std::env; // For getting the current working directory
-
-// Define a struct to hold the command line arguments
-#[derive(Parser)]
-#[command(author = "John Wesley Mathis", version, about = "Encrypt or decrypt a file")]
-#[command(long_about = "Program to encrypt or decrypt a file using a simple XOR cipher. The default cipher type is encryption, but can be set to decryption. \n\nFor encryption set the cipher type to \"encrypt\" or \"e\"; For decryption set the cipher type to \"decrypt\" or \"d\"")]
-struct Args {
-    /// Cipher type
-    #[arg(short = 'c', long = "cipher", default_value = "encrypt")]
-    cipher_type: String,
-
-    /// Path to the input file
-    #[arg(short, long)]
-    input: String,
-
-    /// Path to the output file
-    #[arg(short, long)]
-    output: String
-}
 
 
 // Read file
@@ -44,12 +25,14 @@ fn write_file(path: &str, data: &[u8]) {
     })
 }
 
+// Print CLI Application usage
 fn print_usage() {
     println!("Usage: encryptor [OPTIONS] <input> <output>
         -h, --help    Print this help message (--help for complete summary)
     ");
 }
 
+// Print CLI Application help
 fn print_help() {
     println!("Program to encrypt or decrypt a file using a simple XOR cipher. 
     The default cipher type is encryption, but can be set to decryption. 
@@ -73,12 +56,15 @@ fn main() {
     // Collect command line arguments
     let args: Vec<String> = std::env::args().collect();
 
+    // Argument variables
     let mut input = None;
     let mut output = None;
     let mut cipher = None;
 
+    
     let mut i = 1;
 
+    // Parse command line arguments
     while i < args.len() {
         match args[i].as_str() {
                 "--cipher" | "-c" => {
@@ -120,6 +106,7 @@ fn main() {
             i += 1;             
     }
     
+    // Check for missing arguments
     let cipher_type: String;
     if cipher.is_none() { 
         cipher_type = "encrypt".to_string(); // Default to encryption if no cipher type is set
@@ -142,10 +129,10 @@ fn main() {
     let encrypted_data = encrypt_decrypt(&input_data, key);
     //println!("Encrypted data: {:#?}", encrypted_data);
     
-    
     // Write the output file
     write_file(&output_file, &encrypted_data);
     
+    // Print success message
     if cipher_type == "decrypt" || cipher_type == "d" {
         println!("Successfully decrypted and written to file: {}", args[2]);
     } else {
