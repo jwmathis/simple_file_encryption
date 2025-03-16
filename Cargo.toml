@@ -1,5 +1,5 @@
 [package]
-name = "xor_cipher"
+name = "rust_file_encryption"
 version = "0.1.0"
 edition = "2024"
 
