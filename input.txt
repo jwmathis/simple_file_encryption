@@ -1,2 +1,0 @@
-This is an example text file to practice encryption and decryption.!!!!!
-Along with some ext@ symbols to & see if this ***.

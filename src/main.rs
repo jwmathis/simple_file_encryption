@@ -1,13 +1,18 @@
 use std::process; // For exiting the program
 use std::fs; // For creating and writing to files
-//use std::env; // For getting the current working directory
-use colored::*;
+use colored::*; // For colored text
+use std::env; // For current working directory
+use std::path::Path; // For file creation
 
 // Read file
 fn read_file(path: &str) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|err| {
-        eprintln!("Failed to read file: {}.red()", err);
-        process::exit(1);
+        eprintln!("Failed to read file: {}.red()
+Current working directory: {},
+Ensure the file exists and the path is correct.", 
+        err,
+        env::current_dir().unwrap().display());
+        process::exit(0);
     })
 }
 
@@ -18,42 +23,72 @@ fn encrypt_decrypt(data: &[u8], xor_key: u8) -> Vec<u8> {
 
 // Write file
 fn write_file(path: &str, data: &[u8]) {
+
+    // Check if the parent directory exists and create it if it doesn't
+    let parent_dir = Path::new(path).parent();
+    let file_stem = Path::new(path).file_stem();
+    
+    if let Some(inner) = parent_dir  {
+        if !inner.exists() {
+            if Path::new(path).is_relative() {
+                match fs::create_dir_all(inner) {
+                    Ok(_) => println!("Adding directory/file to current working directory: {}", env::current_dir().unwrap().display()),
+                    Err(err) => println!("Failed to create directory: {}", err),
+                }  
+            } else {
+                match fs::create_dir_all(inner) {
+                    Ok(_) => println!("Created directory: {}", inner.display()),
+                    Err(err) => println!("Failed to create directory: {}", err),
+                } 
+            }  
+        }
+    } 
+    
+    if file_stem.is_some() && !Path::new(path).exists() {
+        match fs::File::create(path) {
+            Ok(_) => println!("Created file: {}", path),
+            Err(err) => println!("Failed to create file: {}", err),
+        }
+    }
+
     fs::write(path, data).unwrap_or_else(|err| {
-        eprintln!("Failed to write file: {}", err);
-        process::exit(1);
+        eprintln!("Failed to write file: {}
+Current working directory: {}
+Ensure the file exists and the path is correct.", 
+        err,
+        env::current_dir().unwrap().display());
+        process::exit(0);
     })
 }
 
 // Print CLI Application usage
 fn print_help_summary() {
-    println!("{} encryptor [OPTIONS] <input> <output>", "Usage:".green().bold());
+    println!("{} encryptor [OPTIONS] --input <input_file> --output <output_file>", "Usage:".green().bold());
 
     println!(
         "\n{}:
-        -c, --cipher  Set the cipher type [default: encrypt]
-        -i, --input   Set the input file
-        -o, --output  Set the output file
-        -h, --help    Print this help message (--help for complete help)" 
+        -c, --cipher <encrypt|e|decrypt|d> Set the cipher type [default: encrypt]
+        -i, --input  <input_file> Set the input file
+        -o, --output <output_file> Set the output file
+        -h, --help    Print this help message (-h for summary)" 
         , "Options".bold());
 }
 
 // Print CLI Application help
 fn print_help() {
-    println!("
-    {}
-    Program to encrypt or decrypt a file using a simple XOR cipher. 
-    The default cipher type is encryption, but can be set to decryption. 
-    \n\nFor encryption set the cipher type to \"encrypt\" or \"e\". 
-    For decryption set the cipher type to \"decrypt\" or \"d\"
-    ", "CLI Xor Cipher".blue().bold());
+    println!("\n{}\nA program to encrypt or decrypt a file using a simple XOR cipher. 
+The default cipher type is encryption, but can be set to decryption. 
+\nFor encryption set the cipher type to \"encrypt\" or \"e\". 
+For decryption set the cipher type to \"decrypt\" or \"d\".\n",
+"CLI XOR Cipher Application".blue().bold());
 
-    println!("{} encryptor [OPTIONS] <input> <output>", "Usage:".green().bold());
+    println!("{} encryptor [OPTIONS] --input <input_file> --output <output_file>", "Usage:".green().bold());
 
     println!(
     "\n{}:
-    -c, --cipher  Set the cipher type [default: encrypt]
-    -i, --input   Set the input file
-    -o, --output  Set the output file
+    -c, --cipher <encrypt|e|decrypt|d> Set the cipher type [default: encrypt]
+    -i, --input  <input_file> Set the input file
+    -o, --output <output_file> Set the output file
     -h, --help    Print this help message (-h for summary)" 
     , "Options".bold());
 
@@ -79,8 +114,8 @@ fn main() {
                     if i < args.len() {
                         cipher = Some(args[i].clone());
                     } else {
-                        eprintln!("Error: Missing cipher type. --cipher requires an argument.");
-                        process::exit(1);
+                        eprintln!("\n{}: Missing cipher type. --cipher requires an argument.", "Error".red());
+                        process::exit(0);
                     }
                 }
                 "--input" | "-i" => {
@@ -88,8 +123,8 @@ fn main() {
                     if i < args.len() {
                         input = Some(args[i].clone());
                     } else {
-                        eprintln!("Error: Missing input file. --input requires an argument.");
-                        process::exit(1);
+                        eprintln!("\n{}: Missing input file. --input requires an argument.", "Error".red());
+                        process::exit(0);
                     }
                 }
                "--output" | "-o" => {
@@ -97,8 +132,8 @@ fn main() {
                     if i < args.len() {
                         output = Some(args[i].clone());
                     } else {
-                        eprintln!("Error: Missing output file. --output requires an argument.");
-                        process::exit(1);
+                        eprintln!("\n{}: Missing output file. --output requires an argument.", "Error".red());
+                        process::exit(0);
                     }
                 }
                 "--help" => {
@@ -110,8 +145,9 @@ fn main() {
                     process::exit(0);
                 }
                 _ => {
-                    eprintln!("Error: Unrecognized option: {}", args[i]);
-                    process::exit(1);
+                    eprintln!("\n{}: Unrecognized option: {}", "Error".red(), args[i]);
+                    print_help_summary();
+                    process::exit(0);
                 }
             }
             i += 1;             
@@ -119,10 +155,15 @@ fn main() {
     
     // Check for missing arguments
     let cipher_type: String;
-    if cipher.is_none() { 
+    if cipher.is_none() || cipher.clone().unwrap() == "encrypt" || cipher.clone().unwrap() == "e"{ 
         cipher_type = "encrypt".to_string(); // Default to encryption if no cipher type is set
+    } else if cipher.clone().unwrap() == "decrypt" || cipher.clone().unwrap() == "d" {
+        cipher_type = "decrypt".to_string();
     } else {
-        cipher_type = cipher.expect("Error: Missing cipher type. --cipher requires an argument.");
+        eprintln!("\n{}: Missing/Incorrect cipher type. --cipher requires an argument.", "Error".red());
+        println!("Valid cipher types: encrypt, e, decrypt, d\n");
+        print_help_summary();
+        process::exit(0);
     }
     let input_file = input.expect("Error: Missing input file. --input requires an argument.");
     let output_file = output.expect("Error: Missing output file. --output requires an argument.");
@@ -145,9 +186,9 @@ fn main() {
     
     // Print success message
     if cipher_type == "decrypt" || cipher_type == "d" {
-        println!("Successfully decrypted and written to file: {}", args[2]);
+        println!("Successfully decrypted and written to file: {}", output_file);
     } else {
-        println!("Successfully encrypted and written to file: {}", args[2]);
+        println!("Successfully encrypted and written to file: {}", output_file);
         println!("The encryption key is: {}", key);
     }
     // Debug: Decrypt the input data
