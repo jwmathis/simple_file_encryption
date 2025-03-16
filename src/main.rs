@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt() {
-        let input_data = b"Hello, world!!!!";
+        let input_data = b"Hello, world! Test Encryption test@123";
         let key = 0x12345678;
         let encrypted_data = encrypt_decrypt(input_data, key);
         let decrypted_data = encrypt_decrypt(&encrypted_data, key);
