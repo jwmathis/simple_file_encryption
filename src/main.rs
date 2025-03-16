@@ -7,7 +7,7 @@ use std::path::Path; // For file creation
 // Read file
 fn read_file(path: &str) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|err| {
-        eprintln!("Failed to read file: {}.red()
+        eprintln!("Failed to read input file: {}
 Current working directory: {},
 Ensure the file exists and the path is correct.", 
         err,
@@ -17,8 +17,9 @@ Ensure the file exists and the path is correct.",
 }
 
 // Encrypt file with XOR
-fn encrypt_decrypt(data: &[u8], xor_key: u8) -> Vec<u8> {
-    data.iter().map(|&byte| byte ^ xor_key).collect()
+fn encrypt_decrypt(data: &[u8], xor_key: u32) -> Vec<u8> {
+    //data.iter().map(|&byte| byte ^ xor_key).collect()
+    data.iter().enumerate().map(|(i, &byte)| byte ^ ((xor_key >> (8 * (i % 4))) as u8)).collect()
 }
 
 // Write file
@@ -176,7 +177,7 @@ fn main() {
 
 
     // Encrypt the input data
-    let key = 0x42;
+    let key = 0xdeadbeef;
 
     let encrypted_data = encrypt_decrypt(&input_data, key);
     //println!("Encrypted data: {:#?}", encrypted_data);
@@ -196,4 +197,18 @@ fn main() {
 
     // Exit the program
     process::exit(0);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_encrypt_decrypt() {
+        let input_data = b"Hello, world!!!!";
+        let key = 0x12345678;
+        let encrypted_data = encrypt_decrypt(input_data, key);
+        let decrypted_data = encrypt_decrypt(&encrypted_data, key);
+        assert_eq!(input_data.to_vec(), decrypted_data);
+    }
 }
