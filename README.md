@@ -28,12 +28,12 @@ Options:
 
 #### Encrypt a File
 ```bash
-encryptor -c encrypt -i input.txt -o encrypted_output.txt
+xor_cipher -c encrypt -i input.txt -o encrypted_output.txt
 ```
 
 #### Decrypt a File
 ```bash
-encryptor -c decrypt -i encrypted_output.txt -o decrypted_output.txt
+xor_cipher -c decrypt -i encrypted_output.txt -o decrypted_output.txt
 ```
 
 ## Testing
